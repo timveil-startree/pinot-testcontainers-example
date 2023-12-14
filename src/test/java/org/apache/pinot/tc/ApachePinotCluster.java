@@ -119,6 +119,24 @@ public class ApachePinotCluster implements Startable {
         }
     }
 
+    @Override
+    public void start() {
+        log.info("starting all containers");
+        allContainers().sequential().forEach(GenericContainer::start);
+    }
+
+    @Override
+    public void stop() {
+        log.info("stopping all containers");
+        allContainers().parallel().forEach(GenericContainer::stop);
+    }
+
+    @Override
+    public void close() {
+        log.info("closing all containers");
+        allContainers().parallel().forEach(GenericContainer::close);
+    }
+
     @NotNull
     private static String getJavaOpts(String xms, String xmx) {
         return "-Dplugins.dir=/opt/pinot/plugins -Xms%s -Xmx%s -XX:+UseG1GC -XX:MaxGCPauseMillis=200".formatted(xms, xmx);
@@ -146,21 +164,5 @@ public class ApachePinotCluster implements Startable {
         return pinotBroker.getMappedPort(BROKER_PORT);
     }
 
-    @Override
-    public void start() {
-        log.info("starting all containers");
-        allContainers().sequential().forEach(GenericContainer::start);
-    }
 
-    @Override
-    public void stop() {
-        log.info("stopping all containers");
-        allContainers().parallel().forEach(GenericContainer::stop);
-    }
-
-    @Override
-    public void close() {
-        log.info("closing all containers");
-        allContainers().parallel().forEach(GenericContainer::close);
-    }
 }
