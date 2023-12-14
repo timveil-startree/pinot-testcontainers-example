@@ -46,7 +46,7 @@ public class BrokerService {
                 .bodyToMono(String.class)
                 .block();
 
-        log.debug("raw query results: \n\n{}\n\n", response);
+        log.debug("raw query results: \n\n{}\n", response);
 
         QueryResponse queryResponse = objectMapper.readValue(response, QueryResponse.class);
 

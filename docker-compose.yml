@@ -1,0 +1,82 @@
+version: '3.7'
+
+networks:
+  pinot-demo:
+    name: pinot-demo
+
+services:
+  zookeeper:
+    image: zookeeper:3.5
+    platform: linux/arm64/v8
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - pinot-demo
+
+  pinot-controller:
+    image: apachepinot/pinot:release-1.0.0-21-openjdk
+    command: "StartController -zkAddress zookeeper:2181"
+    hostname: pinot-controller
+    container_name: pinot-controller
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      JAVA_OPTS: "-Dplugins.dir=/opt/pinot/plugins -Xms1G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xloggc:gc-pinot-controller.log"
+    depends_on:
+      - zookeeper
+    networks:
+      - pinot-demo
+
+  pinot-broker:
+    image: apachepinot/pinot:release-1.0.0-21-openjdk
+    command: "StartBroker -zkAddress zookeeper:2181"
+    restart: unless-stopped
+    hostname: pinot-broker
+    container_name: pinot-broker
+    ports:
+      - "8099:8099"
+    environment:
+      JAVA_OPTS: "-Dplugins.dir=/opt/pinot/plugins -Xms4G -Xmx4G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xloggc:gc-pinot-broker.log"
+    depends_on:
+      - pinot-controller
+    networks:
+      - pinot-demo
+
+  pinot-server:
+    image: apachepinot/pinot:release-1.0.0-21-openjdk
+    command: "StartServer -zkAddress zookeeper:2181"
+    restart: unless-stopped
+    hostname: pinot-server
+    container_name: pinot-server
+    ports:
+      - "8098:8098"
+    environment:
+      JAVA_OPTS: "-Dplugins.dir=/opt/pinot/plugins -Xms4G -Xmx16G -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Xloggc:gc-pinot-server.log"
+    depends_on:
+      - pinot-broker
+    networks:
+      - pinot-demo
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - pinot-demo

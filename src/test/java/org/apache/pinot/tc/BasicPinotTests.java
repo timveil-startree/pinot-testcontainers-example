@@ -59,6 +59,7 @@ class BasicPinotTests {
     @BeforeEach
     void setUp() {
         try {
+            log.error("taking a quick nap before starting test...");
             Thread.sleep(Duration.ofSeconds(10L));
         } catch (InterruptedException e) {
             log.error("error while sleeping: {}", e.getMessage(), e);

@@ -22,14 +22,18 @@ public class ApachePinotCluster implements Startable {
 
     private static final int CONTROLLER_PORT = 9000;
     private static final String CONTROLLER_ALIAS = "pinot-controller";
+    private static final String CONTROLLER_COMMAND = "StartController -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
 
     private static final int BROKER_PORT = 8099;
     private static final String BROKER_ALIAS = "pinot-broker";
+    private static final String BROKER_COMMAND = "StartBroker -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
 
     private static final int SERVER_PORT = 8098;
     private static final String SERVER_ALIAS = "pinot-server";
+    private static final String SERVER_COMMAND = "StartServer -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
 
     private static final String MINION_ALIAS = "pinot-minion";
+    private static final String MINION_COMMAND = "StartMinion -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
 
     private static final String JAVA_OPTS = "JAVA_OPTS";
 
@@ -58,10 +62,7 @@ public class ApachePinotCluster implements Startable {
                         .withEnv("ZOOKEEPER_CLIENT_PORT", Integer.toString(ZOOKEEPER_PORT))
                         .withEnv("ZOOKEEPER_TICK_TIME", "2000")
                         .withStartupTimeout(Duration.ofMinutes(1))
-                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(ZOOKEEPER_ALIAS)).withSeparateOutputStreams());
-
-
-        String controllerCommand = "StartController -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
+                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(ZOOKEEPER_ALIAS)));
 
         this.pinotController =
                 new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
@@ -71,11 +72,9 @@ public class ApachePinotCluster implements Startable {
                         .withExposedPorts(CONTROLLER_PORT)
                         .withEnv(JAVA_OPTS, getJavaOpts("1G", "4G"))
                         .withEnv("LOG4J_CONSOLE_LEVEL", "warn")
-                        .withCommand(controllerCommand)
+                        .withCommand(CONTROLLER_COMMAND)
                         .waitingFor(getWaitStrategy("CONTROLLER"))
-                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(CONTROLLER_ALIAS)).withSeparateOutputStreams());
-
-        String brokerCommand = "StartBroker -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
+                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(CONTROLLER_ALIAS)));
 
         this.pinotBroker =
                 new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
@@ -85,11 +84,9 @@ public class ApachePinotCluster implements Startable {
                         .withExposedPorts(BROKER_PORT)
                         .withEnv(JAVA_OPTS, getJavaOpts("4G", "4G"))
                         .withEnv("LOG4J_CONSOLE_LEVEL", "warn")
-                        .withCommand(brokerCommand)
+                        .withCommand(BROKER_COMMAND)
                         .waitingFor(getWaitStrategy("BROKER"))
-                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(BROKER_ALIAS)).withSeparateOutputStreams());
-
-        String serverCommand = "StartServer -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
+                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(BROKER_ALIAS)));
 
         this.pinotServer =
                 new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
@@ -99,13 +96,11 @@ public class ApachePinotCluster implements Startable {
                         .withExposedPorts(SERVER_PORT)
                         .withEnv(JAVA_OPTS, getJavaOpts("4G", "8G"))
                         .withEnv("LOG4J_CONSOLE_LEVEL", "warn")
-                        .withCommand(serverCommand)
+                        .withCommand(SERVER_COMMAND)
                         .waitingFor(getWaitStrategy("SERVER"))
-                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(SERVER_ALIAS)).withSeparateOutputStreams());
+                        .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(SERVER_ALIAS)));
 
         if (enableMinion) {
-            String minionCommand = "StartMinion -zkAddress %s:%s".formatted(ZOOKEEPER_ALIAS, ZOOKEEPER_PORT);
-
             this.pinotMinion =
                     new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
                             .withNetwork(pinotNetwork)
@@ -113,9 +108,9 @@ public class ApachePinotCluster implements Startable {
                             .dependsOn(pinotBroker)
                             .withEnv(JAVA_OPTS, getJavaOpts("4G", "8G"))
                             .withEnv("LOG4J_CONSOLE_LEVEL", "warn")
-                            .withCommand(minionCommand)
+                            .withCommand(MINION_COMMAND)
                             .waitingFor(getWaitStrategy("MINION"))
-                            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(MINION_ALIAS)).withSeparateOutputStreams());
+                            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(MINION_ALIAS)));
         }
     }
 
