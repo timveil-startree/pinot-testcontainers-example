@@ -14,6 +14,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
+import java.time.Duration;
+
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BasicPinotTests {
@@ -52,6 +54,15 @@ class BasicPinotTests {
     @AfterAll
     static void afterAll() {
         pinotCluster.stop();
+    }
+
+    @BeforeEach
+    void setUp() {
+        try {
+            Thread.sleep(Duration.ofSeconds(10L));
+        } catch (InterruptedException e) {
+            log.error("error while sleeping: {}", e.getMessage(), e);
+        }
     }
 
     @Test
