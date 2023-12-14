@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pinot.tc.api.QueryException;
 import org.apache.pinot.tc.api.QueryResponse;
 import org.apache.pinot.tc.api.SqlQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class BrokerService {
+
+    private static final Logger log = LoggerFactory.getLogger(BrokerService.class);
 
     private final WebClient client;
     private final ObjectMapper objectMapper;
@@ -34,20 +38,24 @@ public class BrokerService {
     }
 
     private QueryResponse getQueryResponse(String query, String path) throws JsonProcessingException {
-        QueryResponse response = client.post()
+        String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path(path).build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(objectMapper.writeValueAsString(new SqlQuery(query)))
                 .retrieve()
-                .bodyToMono(QueryResponse.class)
+                .bodyToMono(String.class)
                 .block();
 
-        if (response != null && response.getExceptions() != null && !response.getExceptions().isEmpty()) {
-            for (QueryException ex : response.getExceptions()) {
-                throw new RuntimeException(ex.getMessage());
+        log.debug("raw query results: \n\n{}\n\n", response);
+
+        QueryResponse queryResponse = objectMapper.readValue(response, QueryResponse.class);
+
+        if (queryResponse != null && queryResponse.getExceptions() != null && !queryResponse.getExceptions().isEmpty()) {
+            for (QueryException ex : queryResponse.getExceptions()) {
+                log.error(ex.getMessage(), ex);
             }
         }
 
-        return response;
+        return queryResponse;
     }
 }

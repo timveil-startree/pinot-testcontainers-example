@@ -1,10 +1,8 @@
 package org.apache.pinot.tc;
 
 import org.apache.pinot.tc.api.PostResponse;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.apache.pinot.tc.api.QueryResponse;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
 @SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BasicPinotTests {
 
     private static final Logger log = LoggerFactory.getLogger(BasicPinotTests.class);
@@ -56,6 +55,7 @@ class BasicPinotTests {
     }
 
     @Test
+    @Order(1)
     void testCreateSchema() {
         try {
             PostResponse response = controllerService.createSchema(transcriptSchemaDefinition);
@@ -63,11 +63,13 @@ class BasicPinotTests {
             Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
             log.debug("create schema response: {}", response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail(e);
         }
     }
 
     @Test
+    @Order(2)
     void testCreateTable() {
         try {
             PostResponse response = controllerService.createTable(transcriptTableDefinition);
@@ -75,18 +77,35 @@ class BasicPinotTests {
             Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
             log.debug("create table response: {}", response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail(e);
         }
     }
 
     @Test
-    void ingestData() {
+    @Order(3)
+    void testIngestData() {
         try {
             PostResponse response = controllerService.ingestFromFile("transcript_OFFLINE", new BatchIngestConfiguration("csv", ","), transcriptData);
             Assertions.assertNotNull(response);
             Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully ingested file into table"), "response was: %s".formatted(response));
             log.debug("ingest from file response: {}", response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            Assertions.fail(e);
+        }
+    }
+
+    @Test
+    @Order(4)
+    void testSingleStageQuery() {
+        try {
+            QueryResponse response = brokerService.executeQuery("select avg(score) from transcript");
+            Assertions.assertNotNull(response);
+            Assertions.assertEquals(1, response.getNumRowsResultSet());
+            log.debug("query response: {}", response);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail(e);
         }
     }

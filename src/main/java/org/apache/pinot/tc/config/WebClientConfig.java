@@ -40,6 +40,10 @@ public class WebClientConfig {
 
     }
 
+    private ExchangeFilterFunction logResponse() {
+        return ExchangeFilterFunction.ofResponseProcessor(WebClientConfig::logBody);
+    }
+
     private static Mono<ClientResponse> logBody(ClientResponse response) {
         response.statusCode();
 

@@ -18,6 +18,7 @@ public class QueryResponse {
     private long numSegmentsQueried;
     private long numServersQueried;
     private long numServersResponded;
+    private long numRowsResultSet;
     private long timeUsedMs;
     private long totalDocs;
 
@@ -133,6 +134,14 @@ public class QueryResponse {
         this.totalDocs = totalDocs;
     }
 
+    public long getNumRowsResultSet() {
+        return numRowsResultSet;
+    }
+
+    public void setNumRowsResultSet(long numRowsResultSet) {
+        this.numRowsResultSet = numRowsResultSet;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
@@ -150,6 +159,7 @@ public class QueryResponse {
                 .add("numServersResponded", numServersResponded)
                 .add("timeUsedMs", timeUsedMs)
                 .add("totalDocs", totalDocs)
+                .add("numRowsResultSet", numRowsResultSet)
                 .toString();
     }
 }
