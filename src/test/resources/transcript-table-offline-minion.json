@@ -19,7 +19,7 @@
   "ingestionConfig": {
     "batchIngestionConfig": {
       "segmentIngestionType": "REFRESH",
-      "segmentIngestionFrequency": "DAILY",
+      "segmentIngestionFrequency": "HOURLY",
       "batchConfigMaps": [
         {
           "input.fs.className": "org.apache.pinot.plugin.filesystem.S3PinotFS",
@@ -37,7 +37,6 @@
   "task": {
     "taskTypeConfigsMap": {
       "SegmentGenerationAndPushTask": {
-        "tableMaxNumTasks": "10"
       }
     }
   }
