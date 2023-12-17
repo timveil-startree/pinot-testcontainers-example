@@ -1,5 +1,6 @@
 package org.apache.pinot.tc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pinot.tc.api.PostResponse;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public class ControllerService {
         return objectMapper.readValue(response, PostResponse.class);
     }
 
-    public PostResponse scheduleTask(String taskName, String tableName) throws IOException {
+    public String scheduleTask(String taskName, String tableName) throws IOException {
 
         String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("tasks/schedule").queryParam("taskType", taskName).queryParam("tableName", tableName).build())
@@ -85,7 +86,9 @@ public class ControllerService {
 
         log.debug("raw schedule task response: \n\n{}\n", response);
 
-        return objectMapper.readValue(response, PostResponse.class);
+        JsonNode jsonNode = objectMapper.readTree(response);
+
+        return jsonNode.get(taskName).asText();
 
     }
 

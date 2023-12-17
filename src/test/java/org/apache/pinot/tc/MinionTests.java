@@ -98,7 +98,7 @@ class MinionTests {
         try {
             PostResponse response = controllerService.createSchema(transcriptSchemaDefinition);
             Assertions.assertNotNull(response);
-            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
+            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "create schema failed: %s".formatted(response));
             log.debug("create schema response: {}", response);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -123,7 +123,7 @@ class MinionTests {
 
             PostResponse response = controllerService.createTable(tableConfig);
             Assertions.assertNotNull(response);
-            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
+            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "create table failed: %s".formatted(response));
             log.debug("create table response: {}", response);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -135,10 +135,10 @@ class MinionTests {
     @Order(3)
     void testScheduleTaskData() {
         try {
-            PostResponse response = controllerService.scheduleTask("SegmentGenerationAndPushTask","transcript_OFFLINE");
+            String response = controllerService.scheduleTask("SegmentGenerationAndPushTask","transcript_OFFLINE");
             Assertions.assertNotNull(response);
-            //Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
-            log.debug("schedule task response: {}", response);
+            Assertions.assertTrue(StringUtils.containsIgnoreCase(response, "Task_SegmentGenerationAndPushTask_"), "task id not valid: %s".formatted(response));
+            log.debug("schedule task id: {}", response);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             Assertions.fail(e);
