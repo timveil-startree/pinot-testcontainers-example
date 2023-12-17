@@ -1,0 +1,45 @@
+{
+  "tableName": "transcript",
+  "segmentsConfig" : {
+    "timeColumnName": "timestampInEpoch",
+    "timeType": "MILLISECONDS",
+    "replication" : "1",
+    "schemaName" : "transcript"
+  },
+  "tableIndexConfig" : {
+    "invertedIndexColumns" : [],
+    "loadMode"  : "MMAP"
+  },
+  "tenants" : {
+    "broker":"DefaultTenant",
+    "server":"DefaultTenant"
+  },
+  "tableType":"OFFLINE",
+  "metadata": {},
+  "ingestionConfig": {
+    "batchIngestionConfig": {
+      "segmentIngestionType": "REFRESH",
+      "segmentIngestionFrequency": "DAILY",
+      "batchConfigMaps": [
+        {
+          "input.fs.className": "org.apache.pinot.plugin.filesystem.S3PinotFS",
+          "inputDirURI": "s3://${bucket}",
+          "input.fs.prop.endpoint": "${endpoint}",
+          "input.fs.prop.region": "${region}",
+          "input.fs.prop.secretKey": "${secretKey}",
+          "input.fs.prop.accessKey": "${accessKey}",
+          "inputFormat": "csv",
+          "includeFileNamePattern": "glob:**/*.csv"
+        }
+      ]
+    }
+  },
+  "task": {
+    "taskTypeConfigsMap": {
+      "SegmentGenerationAndPushTask": {
+        "schedule": "0 * * * * ?",
+        "tableMaxNumTasks": "10"
+      }
+    }
+  }
+}

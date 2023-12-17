@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.Network;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
@@ -22,8 +23,10 @@ class BasicPinotTests {
 
     private static final Logger log = LoggerFactory.getLogger(BasicPinotTests.class);
 
+    static Network pinotNetwork = Network.newNetwork();
+
     @Container
-    static ApachePinotCluster pinotCluster = new ApachePinotCluster("3.6.3", "release-1.0.0-21-openjdk", false);
+    static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "pinot:latest-11", false, pinotNetwork);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

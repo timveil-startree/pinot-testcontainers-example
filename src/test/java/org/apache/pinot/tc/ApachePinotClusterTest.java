@@ -1,11 +1,13 @@
 package org.apache.pinot.tc;
 
+import org.testcontainers.containers.Network;
+
 import java.time.Duration;
 
 public class ApachePinotClusterTest {
 
     public static void main(String[] args) {
-        try (ApachePinotCluster cluster = new ApachePinotCluster("3.6.3", "release-1.0.0-21-openjdk", false)) {
+        try (ApachePinotCluster cluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "pinot:latest-11", false, Network.newNetwork())) {
             cluster.start();
 
             Thread.sleep(Duration.ofMinutes(5));

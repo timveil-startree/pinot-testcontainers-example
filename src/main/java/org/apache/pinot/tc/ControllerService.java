@@ -34,30 +34,58 @@ public class ControllerService {
     }
 
     public PostResponse createSchema(Resource resource) throws IOException {
+        String schemaConfig = resource.getContentAsString(Charset.defaultCharset());
+        return createSchema(schemaConfig);
+    }
 
-        String contentAsString = resource.getContentAsString(Charset.defaultCharset());
+    public PostResponse createSchema(String schemaConfig) throws IOException {
 
-        return client.post()
+        String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("schemas").build())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(contentAsString)
+                .bodyValue(schemaConfig)
                 .retrieve()
-                .bodyToMono(PostResponse.class)
+                .bodyToMono(String.class)
                 .block();
+
+        log.debug("raw create schema response: \n\n{}\n", response);
+
+        return objectMapper.readValue(response, PostResponse.class);
 
     }
 
     public PostResponse createTable(Resource resource) throws IOException {
+        String tableConfig = resource.getContentAsString(Charset.defaultCharset());
+        return createTable(tableConfig);
+    }
 
-        String contentAsString = resource.getContentAsString(Charset.defaultCharset());
+    public PostResponse createTable(String tableConfig) throws IOException {
 
-        return client.post()
+        String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("tables").build())
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(contentAsString)
+                .bodyValue(tableConfig)
                 .retrieve()
-                .bodyToMono(PostResponse.class)
+                .bodyToMono(String.class)
                 .block();
+
+        log.debug("raw create table response: \n\n{}\n", response);
+
+        return objectMapper.readValue(response, PostResponse.class);
+    }
+
+    public PostResponse scheduleTask(String taskName, String tableName) throws IOException {
+
+        String response = client.post()
+                .uri(uriBuilder -> uriBuilder.path("tasks/schedule").queryParam("taskType", taskName).queryParam("tableName", tableName).build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        log.debug("raw schedule task response: \n\n{}\n", response);
+
+        return objectMapper.readValue(response, PostResponse.class);
 
     }
 
@@ -77,13 +105,17 @@ public class ControllerService {
 
         log.debug("uri: {}", uriComponents);
 
-        return client.post()
+        String response = client.post()
                 .uri(uriComponents.toUri())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                 .retrieve()
-                .bodyToMono(PostResponse.class)
+                .bodyToMono(String.class)
                 .block();
+
+        log.debug("raw ingest from file response: \n\n{}\n", response);
+
+        return objectMapper.readValue(response, PostResponse.class);
 
     }
 }

@@ -49,14 +49,12 @@ public class ApachePinotCluster implements Startable {
 
     private final boolean enableMinion;
 
-    public ApachePinotCluster(String zookeeperVersion, String pinotVersion, Boolean enableMinion) {
+    public ApachePinotCluster(String zookeeperVersion, String pinotVersion, Boolean enableMinion, Network network) {
         this.enableMinion = enableMinion;
 
-        Network pinotNetwork = Network.newNetwork();
-
         this.zookeeper =
-                new GenericContainer<>("arm64v8/zookeeper:%s".formatted(zookeeperVersion))
-                        .withNetwork(pinotNetwork)
+                new GenericContainer<>(zookeeperVersion)
+                        .withNetwork(network)
                         .withNetworkAliases(ZOOKEEPER_ALIAS)
                         .withExposedPorts(ZOOKEEPER_PORT)
                         .withEnv("ZOOKEEPER_CLIENT_PORT", Integer.toString(ZOOKEEPER_PORT))
@@ -65,8 +63,8 @@ public class ApachePinotCluster implements Startable {
                         .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(ZOOKEEPER_ALIAS)));
 
         this.pinotController =
-                new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
-                        .withNetwork(pinotNetwork)
+                new GenericContainer<>(pinotVersion)
+                        .withNetwork(network)
                         .withNetworkAliases(CONTROLLER_ALIAS)
                         .dependsOn(zookeeper)
                         .withExposedPorts(CONTROLLER_PORT)
@@ -77,8 +75,8 @@ public class ApachePinotCluster implements Startable {
                         .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(CONTROLLER_ALIAS)));
 
         this.pinotBroker =
-                new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
-                        .withNetwork(pinotNetwork)
+                new GenericContainer<>(pinotVersion)
+                        .withNetwork(network)
                         .withNetworkAliases(BROKER_ALIAS)
                         .dependsOn(pinotController)
                         .withExposedPorts(BROKER_PORT)
@@ -89,8 +87,8 @@ public class ApachePinotCluster implements Startable {
                         .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(BROKER_ALIAS)));
 
         this.pinotServer =
-                new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
-                        .withNetwork(pinotNetwork)
+                new GenericContainer<>(pinotVersion)
+                        .withNetwork(network)
                         .withNetworkAliases(SERVER_ALIAS)
                         .dependsOn(pinotBroker)
                         .withExposedPorts(SERVER_PORT)
@@ -102,8 +100,8 @@ public class ApachePinotCluster implements Startable {
 
         if (enableMinion) {
             this.pinotMinion =
-                    new GenericContainer<>("apachepinot/pinot:%s".formatted(pinotVersion))
-                            .withNetwork(pinotNetwork)
+                    new GenericContainer<>(pinotVersion)
+                            .withNetwork(network)
                             .withNetworkAliases(MINION_ALIAS)
                             .dependsOn(pinotBroker)
                             .withEnv(JAVA_OPTS, getJavaOpts("4G", "8G"))
