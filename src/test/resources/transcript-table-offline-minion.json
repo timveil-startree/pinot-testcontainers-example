@@ -37,7 +37,6 @@
   "task": {
     "taskTypeConfigsMap": {
       "SegmentGenerationAndPushTask": {
-        "schedule": "0 * * * * ?",
         "tableMaxNumTasks": "10"
       }
     }
