@@ -12,7 +12,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.Network;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
@@ -25,7 +24,6 @@ class BasicPinotTests {
 
     static Network pinotNetwork = Network.newNetwork();
 
-    @Container
     static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "pinot:latest-11", false, pinotNetwork);
 
     @DynamicPropertySource

@@ -15,7 +15,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.PropertyPlaceholderHelper;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -23,12 +22,12 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Duration;
-import java.util.List;
 import java.util.Properties;
 
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
@@ -44,10 +43,8 @@ class MinionTests {
 
     static Network pinotNetwork = Network.newNetwork();
 
-    @Container
     static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "pinot:latest-11", true, pinotNetwork);
 
-    @Container
     static LocalStackContainer localstack = new LocalStackContainer(DOCKER_IMAGE_NAME)
             .withNetwork(pinotNetwork)
             .withNetworkAliases("localstack")
@@ -83,13 +80,8 @@ class MinionTests {
 
     @AfterAll
     static void afterAll() {
-        try {
-            Thread.sleep(Duration.ofMinutes(20));
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-//        pinotCluster.stop();
-//        localstack.stop();
+        pinotCluster.stop();
+        localstack.stop();
     }
 
     @Test
@@ -135,7 +127,7 @@ class MinionTests {
     @Order(3)
     void testScheduleTaskData() {
         try {
-            String response = controllerService.scheduleTask("SegmentGenerationAndPushTask","transcript_OFFLINE");
+            String response = controllerService.scheduleTask("SegmentGenerationAndPushTask", "transcript_OFFLINE");
             Assertions.assertNotNull(response);
             Assertions.assertTrue(StringUtils.containsIgnoreCase(response, "Task_SegmentGenerationAndPushTask_"), "task id not valid: %s".formatted(response));
             log.debug("schedule task id: {}", response);
@@ -163,7 +155,7 @@ class MinionTests {
     }
 
     private static void loadDataIntoS3() throws IOException {
-        try (S3Client s3 = S3Client
+        S3ClientBuilder clientBuilder = S3Client
                 .builder()
                 .endpointOverride(localstack.getEndpoint())
                 .credentialsProvider(
@@ -171,19 +163,10 @@ class MinionTests {
                                 AwsBasicCredentials.create(localstack.getAccessKey(), localstack.getSecretKey())
                         )
                 )
-                .region(Region.of(localstack.getRegion()))
-                .build()) {
+                .region(Region.of(localstack.getRegion()));
 
-
+        try (S3Client s3 = clientBuilder.build()) {
             s3.createBucket(b -> b.bucket(BUCKET_NAME));
-
-
-            ListBucketsResponse listBucketsResponse = s3.listBuckets();
-            List<Bucket> buckets = listBucketsResponse.buckets();
-
-            for (Bucket bucket : buckets) {
-                log.info("bucket: {}", bucket.toString());
-            }
 
             final String fileName = "transcripts.csv";
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -192,13 +175,7 @@ class MinionTests {
                     .build();
 
             ClassPathResource classPathResource = new ClassPathResource(fileName);
-
             s3.putObject(putObjectRequest, RequestBody.fromFile(classPathResource.getFile()));
-
-            ListObjectsResponse listObjectsResponse = s3.listObjects(ListObjectsRequest.builder().bucket(BUCKET_NAME).build());
-            for (S3Object content : listObjectsResponse.contents()) {
-                log.info("s3 object: {}", content.toString());
-            }
         }
     }
 

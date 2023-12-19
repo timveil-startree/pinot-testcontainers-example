@@ -130,6 +130,26 @@ public class ApachePinotCluster implements Startable {
         allContainers().parallel().forEach(GenericContainer::close);
     }
 
+    public String getServerLogs() {
+        return pinotServer.getLogs();
+    }
+
+    public String getBrokerLogs() {
+        return pinotBroker.getLogs();
+    }
+
+    public String getControllerLogs() {
+        return pinotBroker.getLogs();
+    }
+
+    public String getMinionLogs() {
+        if (pinotMinion != null) {
+            return pinotMinion.getLogs();
+        }
+
+        return null;
+    }
+
     @NotNull
     private static String getJavaOpts(String xms, String xmx) {
         return "-Dplugins.dir=/opt/pinot/plugins -Xms%s -Xmx%s -XX:+UseG1GC -XX:MaxGCPauseMillis=200".formatted(xms, xmx);
