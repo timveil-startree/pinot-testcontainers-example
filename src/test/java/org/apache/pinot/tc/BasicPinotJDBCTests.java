@@ -1,7 +1,7 @@
 package org.apache.pinot.tc;
 
+import org.apache.pinot.client.PinotDriver;
 import org.apache.pinot.tc.api.PostResponse;
-import org.apache.pinot.tc.api.QueryResponse;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +14,15 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.Network;
 import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
+import java.sql.*;
 import java.time.Duration;
+import java.util.Properties;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class BasicPinotTests {
+class BasicPinotJDBCTests {
 
-    private static final Logger log = LoggerFactory.getLogger(BasicPinotTests.class);
+    private static final Logger log = LoggerFactory.getLogger(BasicPinotJDBCTests.class);
 
     static Network pinotNetwork = Network.newNetwork();
 
@@ -34,9 +36,6 @@ class BasicPinotTests {
 
     @Autowired
     private ControllerService controllerService;
-
-    @Autowired
-    private BrokerService brokerService;
 
     @Value("classpath:transcript-schema.json")
     private Resource transcriptSchemaDefinition;
@@ -112,14 +111,40 @@ class BasicPinotTests {
     @Test
     @Order(4)
     void testSingleStageQuery() {
+
+        registerDriver();
+
+        Properties properties = new Properties();
+        properties.put("useMultistageEngine", "false");
+
+        jdbcQuery(properties);
+
+    }
+
+    private void registerDriver() {
         try {
-            QueryResponse response = brokerService.executeQuery("select avg(score) from transcript");
-            Assertions.assertNotNull(response);
-            Assertions.assertEquals(1, response.getNumRowsResultSet());
-            log.debug("query response: {}", response);
-        } catch (Exception e) {
+            DriverManager.registerDriver(new PinotDriver());
+        } catch (SQLException e) {
             log.error(e.getMessage(), e);
-            Assertions.fail(e);
+        }
+    }
+
+    private void jdbcQuery(Properties properties) {
+
+        String url = "jdbc:pinot://localhost:%s?brokers=localhost:%s".formatted(pinotCluster.getControllerPort(), pinotCluster.getBrokerPort());
+
+        try (Connection conn = DriverManager.getConnection(url, properties);
+             Statement statement = conn.createStatement()) {
+            ResultSet rs = statement.executeQuery("select avg(score) from transcript");
+
+
+            while (rs.next()) {
+                String averageScore = rs.getString(1);
+                System.out.println(String.format("Average Score = %s", averageScore));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

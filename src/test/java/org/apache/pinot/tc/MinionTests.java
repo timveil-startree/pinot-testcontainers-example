@@ -43,7 +43,7 @@ class MinionTests {
 
     static Network pinotNetwork = Network.newNetwork();
 
-    static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "pinot:latest-11", true, pinotNetwork);
+    static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.6.3", "apachepinot/pinot:latest-21-openjdk", true, pinotNetwork);
 
     static LocalStackContainer localstack = new LocalStackContainer(DOCKER_IMAGE_NAME)
             .withNetwork(pinotNetwork)
