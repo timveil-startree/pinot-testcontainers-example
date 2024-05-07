@@ -56,8 +56,8 @@
 
         <dependency>
             <groupId>org.apache.pinot</groupId>
-            <artifactId>pinot-jdbc-uber</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
+            <artifactId>pinot-jdbc-client</artifactId>
+            <version>1.1.0</version>
         </dependency>
 
         <dependency>
