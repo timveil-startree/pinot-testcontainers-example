@@ -37,7 +37,7 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 class MinionTests {
 
     private static final Logger log = LoggerFactory.getLogger(MinionTests.class);
-    private static final DockerImageName DOCKER_IMAGE_NAME = DockerImageName.parse("localstack/localstack:latest");
+    private static final DockerImageName DOCKER_IMAGE_NAME = DockerImageName.parse("localstack/localstack:3.4.0");
     private static final PropertyPlaceholderHelper PROPERTY_PLACEHOLDER_HELPER = new PropertyPlaceholderHelper("${", "}");
     private static final String BUCKET_NAME = "data";
 
