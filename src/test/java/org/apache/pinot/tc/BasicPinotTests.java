@@ -24,7 +24,7 @@ class BasicPinotTests {
 
     static Network pinotNetwork = Network.newNetwork();
 
-    static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.7.2", "apachepinot/pinot:latest-21-openjdk", false, pinotNetwork);
+    static ApachePinotCluster pinotCluster = new ApachePinotCluster("arm64v8/zookeeper:3.9", "apachepinot/pinot:latest-21-openjdk", false, pinotNetwork);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

@@ -6,7 +6,7 @@ networks:
 
 services:
   zookeeper:
-    image: zookeeper:3.8
+    image: zookeeper:3.9
     hostname: zookeeper
     container_name: zookeeper
     ports:
