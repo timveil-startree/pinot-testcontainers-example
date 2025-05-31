@@ -7,7 +7,6 @@ networks:
 services:
   zookeeper:
     image: zookeeper:3.5
-    platform: linux/arm64/v8
     hostname: zookeeper
     container_name: zookeeper
     ports:
