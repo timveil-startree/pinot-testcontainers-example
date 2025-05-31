@@ -89,7 +89,7 @@ Network network = Network.newNetwork();
 
 // Create a Pinot cluster with ZooKeeper 3.9 and Pinot latest
 ApachePinotCluster cluster = new ApachePinotCluster(
-    "arm64v8/zookeeper:3.9", 
+    "zookeeper:3.9", 
     "apachepinot/pinot:latest-21-openjdk", 
     false,  // enableMinion
     network
