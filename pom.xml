@@ -63,7 +63,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver-dns-native-macos</artifactId>
-            <version>4.2.1.Final</version>
+            <version>4.2.2.Final</version>
             <classifier>osx-aarch_64</classifier>
         </dependency>
 
