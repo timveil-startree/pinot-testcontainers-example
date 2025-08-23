@@ -11,4 +11,10 @@ updates:
       interval: "daily"
     assignees:
       - "timveil"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    assignees:
+      - "timveil"
       
