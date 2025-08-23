@@ -1,6 +1,6 @@
 # Apache Pinot TestContainers Example
 
-[![CI](https://github.com/timveil/pinot-testcontainers-example/actions/workflows/ci.yml/badge.svg)](https://github.com/timveil/pinot-testcontainers-example/actions/workflows/ci.yml)
+[![CI](https://github.com/timveil-startree/pinot-testcontainers-example/actions/workflows/ci.yml/badge.svg)](https://github.com/timveil-startree/pinot-testcontainers-example/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
