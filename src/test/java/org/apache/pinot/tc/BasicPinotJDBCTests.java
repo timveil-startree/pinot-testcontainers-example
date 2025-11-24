@@ -1,5 +1,6 @@
 package org.apache.pinot.tc;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pinot.client.PinotDriver;
 import org.apache.pinot.tc.api.PostResponse;
 import org.junit.jupiter.api.*;
@@ -12,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.Network;
-import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 
 import java.sql.*;
 import java.time.Duration;

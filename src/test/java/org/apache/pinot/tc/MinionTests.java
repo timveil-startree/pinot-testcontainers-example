@@ -1,5 +1,6 @@
 package org.apache.pinot.tc;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.pinot.tc.api.PostResponse;
 import org.apache.pinot.tc.api.QueryResponse;
 import org.junit.jupiter.api.*;
@@ -15,7 +16,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.PropertyPlaceholderHelper;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.shaded.org.apache.commons.lang3.StringUtils;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
