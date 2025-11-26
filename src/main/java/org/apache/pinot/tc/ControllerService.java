@@ -1,7 +1,5 @@
 package org.apache.pinot.tc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pinot.tc.api.PostResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +13,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,21 +26,21 @@ public class ControllerService {
     private static final Logger log = LoggerFactory.getLogger(ControllerService.class);
 
     private final WebClient client;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final Environment environment;
 
-    public ControllerService(@Qualifier("controller_client") WebClient client, ObjectMapper objectMapper, Environment environment) {
+    public ControllerService(@Qualifier("controller_client") WebClient client, JsonMapper jsonMapper, Environment environment) {
         this.client = client;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.environment = environment;
     }
 
-    public PostResponse createSchema(Resource resource) throws IOException {
+    public PostResponse createSchema(Resource resource) throws IOException, JacksonException {
         String schemaConfig = resource.getContentAsString(Charset.defaultCharset());
         return createSchema(schemaConfig);
     }
 
-    public PostResponse createSchema(String schemaConfig) throws IOException {
+    public PostResponse createSchema(String schemaConfig) throws JacksonException {
 
         String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("schemas").build())
@@ -51,16 +52,16 @@ public class ControllerService {
 
         log.debug("raw create schema response: \n\n{}\n", response);
 
-        return objectMapper.readValue(response, PostResponse.class);
+        return jsonMapper.readValue(response, PostResponse.class);
 
     }
 
-    public PostResponse createTable(Resource resource) throws IOException {
+    public PostResponse createTable(Resource resource) throws IOException, JacksonException {
         String tableConfig = resource.getContentAsString(Charset.defaultCharset());
         return createTable(tableConfig);
     }
 
-    public PostResponse createTable(String tableConfig) throws IOException {
+    public PostResponse createTable(String tableConfig) throws JacksonException {
 
         String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("tables").build())
@@ -72,10 +73,10 @@ public class ControllerService {
 
         log.debug("raw create table response: \n\n{}\n", response);
 
-        return objectMapper.readValue(response, PostResponse.class);
+        return jsonMapper.readValue(response, PostResponse.class);
     }
 
-    public String scheduleTask(String taskName, String tableName) throws IOException {
+    public String scheduleTask(String taskName, String tableName) throws JacksonException {
 
         String response = client.post()
                 .uri(uriBuilder -> uriBuilder.path("tasks/schedule").queryParam("taskType", taskName).queryParam("tableName", tableName).build())
@@ -86,15 +87,15 @@ public class ControllerService {
 
         log.debug("raw schedule task response: \n\n{}\n", response);
 
-        JsonNode jsonNode = objectMapper.readTree(response);
+        JsonNode jsonNode = jsonMapper.readTree(response);
 
         return jsonNode.get(taskName).asText();
 
     }
 
-    public PostResponse ingestFromFile(String tableName, BatchIngestConfiguration configuration, Resource resource) throws IOException {
+    public PostResponse ingestFromFile(String tableName, BatchIngestConfiguration configuration, Resource resource) throws IOException, JacksonException {
 
-        String configurationAsString = objectMapper.writeValueAsString(configuration);
+        String configurationAsString = jsonMapper.writeValueAsString(configuration);
 
         log.debug("batch configuration as string: {}", configurationAsString);
 
@@ -118,7 +119,7 @@ public class ControllerService {
 
         log.debug("raw ingest from file response: \n\n{}\n", response);
 
-        return objectMapper.readValue(response, PostResponse.class);
+        return jsonMapper.readValue(response, PostResponse.class);
 
     }
 }
