@@ -104,7 +104,7 @@ class MinionTests {
 
             Properties properties = new Properties();
             properties.setProperty("bucket", BUCKET_NAME);
-            properties.setProperty("endpoint", "http://localstack:4566");
+            properties.setProperty("endpoint", String.format("http://localstack:%d", ApachePinotCluster.LOCALSTACK_PORT));
             properties.setProperty("region", localstack.getRegion());
             properties.setProperty("secretKey", localstack.getSecretKey());
             properties.setProperty("accessKey", localstack.getAccessKey());
@@ -140,7 +140,10 @@ class MinionTests {
     @Test
     @Order(4)
     void testSingleStageQuery() {
+
         try {
+            Thread.sleep(Duration.ofMinutes(2));
+
             QueryResponse response = brokerService.executeQuery("select avg(score) from transcript");
             Assertions.assertNotNull(response);
             Assertions.assertEquals(1, response.getNumRowsResultSet());

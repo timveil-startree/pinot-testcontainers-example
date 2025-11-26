@@ -19,6 +19,7 @@ public class ApachePinotCluster implements Startable {
 
     public static final String DEFAULT_PINOT_VERSION = "apachepinot/pinot:1.4.0-21-ms-openjdk";
     public static final String DEFAULT_ZOOKEEPER_VERSION = "zookeeper:3.9";
+    public static final int LOCALSTACK_PORT = 4566;
 
     private static final DockerImageName LOCALSTACK_IMAGE_NAME = DockerImageName.parse("localstack/localstack:stable");
 
@@ -136,6 +137,8 @@ public class ApachePinotCluster implements Startable {
                     .withNetwork(network)
                     .withNetworkAliases("localstack")
                     .withEnv("LOCALSTACK_HOST", "localstack")
+                    .withExposedPorts(LOCALSTACK_PORT)
+                    .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("localstack")))
                     .withServices("s3");
 
         }
@@ -220,6 +223,10 @@ public class ApachePinotCluster implements Startable {
 
     public int getBrokerPort() {
         return pinotBroker.getMappedPort(BROKER_PORT);
+    }
+
+    public int getLocalstackPort() {
+        return localStack.getMappedPort(LOCALSTACK_PORT);
     }
 
 

@@ -89,7 +89,7 @@ public class ControllerService {
 
         JsonNode jsonNode = jsonMapper.readTree(response);
 
-        return jsonNode.get(taskName).asText();
+        return jsonNode.get(taskName).asString();
 
     }
 
