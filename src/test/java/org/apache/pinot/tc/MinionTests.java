@@ -14,9 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.PropertyPlaceholderHelper;
-import org.testcontainers.containers.Network;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.localstack.LocalStackContainer;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -30,26 +28,18 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Properties;
 
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
 @SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class MinionTests {
 
     private static final Logger log = LoggerFactory.getLogger(MinionTests.class);
-    private static final DockerImageName DOCKER_IMAGE_NAME = DockerImageName.parse("localstack/localstack:3.4.0");
+
     private static final PropertyPlaceholderHelper PROPERTY_PLACEHOLDER_HELPER = new PropertyPlaceholderHelper("${", "}");
+
     private static final String BUCKET_NAME = "data";
 
-    static Network pinotNetwork = Network.newNetwork();
-
-    static ApachePinotCluster pinotCluster = new ApachePinotCluster("zookeeper:3.9", "apachepinot/pinot:latest-21-openjdk", true, pinotNetwork);
-
-    static LocalStackContainer localstack = new LocalStackContainer(DOCKER_IMAGE_NAME)
-            .withNetwork(pinotNetwork)
-            .withNetworkAliases("localstack")
-            .withEnv("HOSTNAME_EXTERNAL", "localstack")
-            .withServices(S3);
+    static ApachePinotCluster pinotCluster = new ApachePinotCluster(true, true);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -71,17 +61,24 @@ class MinionTests {
 
     @BeforeAll
     static void beforeAll() throws IOException {
-        localstack.start();
+        pinotCluster.start();
 
         loadDataIntoS3();
+    }
 
-        pinotCluster.start();
+    @BeforeEach
+    void setUp() {
+        try {
+            log.error("taking a quick nap before starting test...");
+            Thread.sleep(Duration.ofSeconds(10L));
+        } catch (InterruptedException e) {
+            log.error("error while sleeping: {}", e.getMessage(), e);
+        }
     }
 
     @AfterAll
     static void afterAll() {
         pinotCluster.stop();
-        localstack.stop();
     }
 
     @Test
@@ -90,7 +87,7 @@ class MinionTests {
         try {
             PostResponse response = controllerService.createSchema(transcriptSchemaDefinition);
             Assertions.assertNotNull(response);
-            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "create schema failed: %s".formatted(response));
+            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
             log.debug("create schema response: {}", response);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -102,6 +99,9 @@ class MinionTests {
     @Order(2)
     void testCreateTable() {
         try {
+
+            LocalStackContainer localstack = pinotCluster.getLocalStack();
+
             Properties properties = new Properties();
             properties.setProperty("bucket", BUCKET_NAME);
             properties.setProperty("endpoint", "http://localstack:4566");
@@ -115,7 +115,7 @@ class MinionTests {
 
             PostResponse response = controllerService.createTable(tableConfig);
             Assertions.assertNotNull(response);
-            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "create table failed: %s".formatted(response));
+            Assertions.assertTrue(StringUtils.containsIgnoreCase(response.getStatus(), "successfully added"), "response was: %s".formatted(response));
             log.debug("create table response: {}", response);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -139,10 +139,7 @@ class MinionTests {
 
     @Test
     @Order(4)
-    void testSingleStageQuery() throws InterruptedException {
-
-        Thread.sleep(Duration.ofSeconds(2));
-
+    void testSingleStageQuery() {
         try {
             QueryResponse response = brokerService.executeQuery("select avg(score) from transcript");
             Assertions.assertNotNull(response);
@@ -155,6 +152,9 @@ class MinionTests {
     }
 
     private static void loadDataIntoS3() throws IOException {
+
+        LocalStackContainer localstack = pinotCluster.getLocalStack();
+
         S3ClientBuilder clientBuilder = S3Client
                 .builder()
                 .endpointOverride(localstack.getEndpoint())

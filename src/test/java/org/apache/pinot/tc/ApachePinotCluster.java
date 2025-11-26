@@ -9,11 +9,18 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startable;
+import org.testcontainers.localstack.LocalStackContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.stream.Stream;
 
 public class ApachePinotCluster implements Startable {
+
+    public static final String DEFAULT_PINOT_VERSION = "apachepinot/pinot:1.4.0-21-ms-openjdk";
+    public static final String DEFAULT_ZOOKEEPER_VERSION = "zookeeper:3.9";
+
+    private static final DockerImageName LOCALSTACK_IMAGE_NAME = DockerImageName.parse("localstack/localstack:stable");
 
     private static final Logger log = LoggerFactory.getLogger(ApachePinotCluster.class);
 
@@ -47,10 +54,23 @@ public class ApachePinotCluster implements Startable {
 
     private GenericContainer<?> pinotMinion;
 
+    private LocalStackContainer localStack;
+
     private final boolean enableMinion;
 
-    public ApachePinotCluster(String zookeeperVersion, String pinotVersion, Boolean enableMinion, Network network) {
+    private final boolean enableLocalstack;
+
+    public ApachePinotCluster(Boolean enableMinion, Boolean enableLocalstack) {
+        this(DEFAULT_ZOOKEEPER_VERSION, DEFAULT_PINOT_VERSION, Network.newNetwork(), enableMinion, enableLocalstack);
+    }
+
+    public ApachePinotCluster(Network network, Boolean enableMinion, Boolean enableLocalstack) {
+        this(DEFAULT_ZOOKEEPER_VERSION, DEFAULT_PINOT_VERSION, network, enableMinion, enableLocalstack);
+    }
+
+    public ApachePinotCluster(String zookeeperVersion, String pinotVersion, Network network, Boolean enableMinion, Boolean enableLocalstack) {
         this.enableMinion = enableMinion;
+        this.enableLocalstack = enableLocalstack;
 
         this.zookeeper =
                 new GenericContainer<>(zookeeperVersion)
@@ -110,6 +130,15 @@ public class ApachePinotCluster implements Startable {
                             .waitingFor(getWaitStrategy("MINION"))
                             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(MINION_ALIAS)));
         }
+
+        if (enableLocalstack) {
+            this.localStack = new LocalStackContainer(LOCALSTACK_IMAGE_NAME)
+                    .withNetwork(network)
+                    .withNetworkAliases("localstack")
+                    .withEnv("LOCALSTACK_HOST", "localstack")
+                    .withServices("s3");
+
+        }
     }
 
     @Override
@@ -150,6 +179,18 @@ public class ApachePinotCluster implements Startable {
         return null;
     }
 
+    public String getLocalStackLogs() {
+        if (localStack != null) {
+            return localStack.getLogs();
+        }
+
+        return null;
+    }
+
+    public LocalStackContainer getLocalStack() {
+        return localStack;
+    }
+
     @NotNull
     private static String getJavaOpts(String xms, String xmx) {
         return "-Dplugins.dir=/opt/pinot/plugins -Xms%s -Xmx%s -XX:+UseG1GC -XX:MaxGCPauseMillis=200".formatted(xms, xmx);
@@ -164,6 +205,10 @@ public class ApachePinotCluster implements Startable {
 
         if (enableMinion) {
             stream = Stream.concat(stream, Stream.of(this.pinotMinion));
+        }
+
+        if (enableLocalstack) {
+            stream = Stream.concat(stream, Stream.of(this.localStack));
         }
 
         return stream;

@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.Network;
 
 import java.time.Duration;
 
@@ -22,9 +21,7 @@ class BasicPinotTests {
 
     private static final Logger log = LoggerFactory.getLogger(BasicPinotTests.class);
 
-    static Network pinotNetwork = Network.newNetwork();
-
-    static ApachePinotCluster pinotCluster = new ApachePinotCluster("zookeeper:3.9", "apachepinot/pinot:latest-21-openjdk", false, pinotNetwork);
+    static ApachePinotCluster pinotCluster = new ApachePinotCluster(false, false);
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -52,11 +49,6 @@ class BasicPinotTests {
         pinotCluster.start();
     }
 
-    @AfterAll
-    static void afterAll() {
-        pinotCluster.stop();
-    }
-
     @BeforeEach
     void setUp() {
         try {
@@ -65,6 +57,11 @@ class BasicPinotTests {
         } catch (InterruptedException e) {
             log.error("error while sleeping: {}", e.getMessage(), e);
         }
+    }
+
+    @AfterAll
+    static void afterAll() {
+        pinotCluster.stop();
     }
 
     @Test
